@@ -2,13 +2,13 @@ from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from users.models import User
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from django.contrib.auth import authenticate
 
 
 class SignUpSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ("username", "email")
+        extra_kwargs = {"username": {"validators": []}}
 
 
 class TokenSerializer(TokenObtainPairSerializer):
