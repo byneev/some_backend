@@ -1,6 +1,12 @@
 from django.shortcuts import get_object_or_404
 from rest_framework.viewsets import ModelViewSet
-from .serializers import SignUpSerializer, TokenSerializer
+from rest_framework.generics import RetrieveAPIView
+from .permissions import OwnerGetPatchPermission
+from .serializers import (
+    SignUpSerializer,
+    TokenSerializer,
+    UsersMyselfSerializer,
+)
 from users.models import SIMPLE_USER, User
 from django.utils.crypto import get_random_string
 from django.core.mail import send_mail
@@ -26,8 +32,11 @@ class SignUpView(ModelViewSet):
             )
         if user and user.confirmation_code:
             raise AlreadyExistException()
+
         code = get_random_string(9)
         if user:
+            if not user.email:
+                raise KeyError("field Email doesnt exists in request")
             User.objects.filter(
                 username=self.request.data.get("username")
             ).update(confirmation_code=code)
@@ -37,7 +46,7 @@ class SignUpView(ModelViewSet):
             "Yamdb confirmation code",
             f"There is your confirmation code to get token on Yamdb - {code}",
             EMAIL_HOST_USER,
-            [user.email],
+            [self.request.data.get("email")],
             fail_silently=False,
         )
 
@@ -45,3 +54,11 @@ class SignUpView(ModelViewSet):
 class TokenView(TokenObtainPairView):
     serializer_class = TokenSerializer
     permission_classes = (permissions.AllowAny,)
+
+
+class UsersMyselfView(ModelViewSet):
+    serializer_class = UsersMyselfSerializer
+    permission_classes = (OwnerGetPatchPermission,)
+
+    def get_queryset(self):
+        return User.objects.filter(username=self.request.user.username)

@@ -16,7 +16,7 @@ ROLES = (
 
 
 class User(AbstractUser):
-    email = models.EmailField("Почта")
+    email = models.EmailField("Почта", unique=True)
     password = models.CharField("Пароль", max_length=20, blank=True)
     role = models.SmallIntegerField("Права", choices=ROLES)
     bio = models.TextField("Биография", blank=True)

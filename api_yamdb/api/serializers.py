@@ -23,7 +23,7 @@ class TokenSerializer(TokenObtainPairSerializer):
         real_user = get_object_or_404(User, username=username)
 
         if not real_user.confirmation_code == confirmation_code:
-            raise KeyError("Not correct confirmation code")
+            raise serializers.ValidationError("Not correct confirmation code")
 
         data = {}
         refresh = self.get_token(real_user)
@@ -31,3 +31,16 @@ class TokenSerializer(TokenObtainPairSerializer):
         data["access"] = str(refresh.access_token)
 
         return data
+
+
+class UsersMyselfSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "bio",
+            "role",
+        )
