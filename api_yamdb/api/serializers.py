@@ -44,3 +44,16 @@ class UsersMyselfSerializer(serializers.ModelSerializer):
             "bio",
             "role",
         )
+
+
+class UsersSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "bio",
+            "role",
+        )

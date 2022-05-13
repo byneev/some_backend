@@ -8,5 +8,14 @@ class OwnerGetPatchPermission(permissions.BasePermission):
         ) and request.user.is_authenticated
 
     def has_object_permission(self, request, view, obj):
-        print("Hello")
         return request.user.username == obj.username
+
+
+class GTEAdminPermission(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.user.role != "user" and request.user.is_authenticated
+
+
+class OnlyPost(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.method == "POST"

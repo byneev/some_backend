@@ -117,13 +117,15 @@ EMAIL_HOST_PASSWORD = "22apiyamdb"
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.AllowAny",
+        "rest_framework.permissions.IsAuthenticated",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
+    "PAGE_SIZE": 10,
+    "DEFAULT_FILTER_BACKENDS": ("rest_framework.filters.SearchFilter",),
 }
-
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=10),
