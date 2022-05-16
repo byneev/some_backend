@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
+from reviews.models import Review
 from users.models import User
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
@@ -56,4 +57,20 @@ class UsersSerializer(serializers.ModelSerializer):
             "last_name",
             "bio",
             "role",
+        )
+
+
+class ReviewsSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        slug_field="username", read_only=True
+    )
+
+    class Meta:
+        model = Review
+        fields = (
+            "id",
+            "text",
+            "author",
+            "score",
+            "pub_date",
         )

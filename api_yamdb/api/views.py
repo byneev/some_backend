@@ -1,9 +1,22 @@
-from cgitb import lookup
 from django.shortcuts import get_object_or_404
-from rest_framework.viewsets import ModelViewSet
-from rest_framework.generics import RetrieveUpdateAPIView
-from .permissions import GTEAdminPermission, OnlyPost, OwnerGetPatchPermission
+from rest_framework.viewsets import (
+    ModelViewSet,
+    ReadOnlyModelViewSet,
+    GenericViewSet,
+)
+from django.db.models import Sum
+from rest_framework.generics import RetrieveUpdateAPIView, mixins
+
+from reviews.models import Review, Title
+from .permissions import (
+    GTEAdminPermission,
+    GetAnyOrPostAuth,
+    OnlyPost,
+    OwnerGetPatchPermission,
+    DeleteUpdateGTEAdminOrOwner,
+)
 from .serializers import (
+    ReviewsSerializer,
     SignUpSerializer,
     TokenSerializer,
     UsersSerializer,
@@ -82,3 +95,38 @@ class UsersViewSet(ModelViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ("username",)
     lookup_field = "username"
+
+
+class GetPostReviewViewSet(ModelViewSet):
+    serializer_class = ReviewsSerializer
+    permission_classes = (GetAnyOrPostAuth,)
+    pagination_class = PageNumberPagination
+
+    def get_queryset(self):
+        title_id = self.kwargs.get("title_id")
+        title = get_object_or_404(Title, id=title_id)
+        return Review.objects.filter(title=title)
+
+    def perform_create(self, serializer):
+        title = get_object_or_404(Title, id=self.kwargs.get("title_id"))
+        print(title.rating)
+        author = self.request.user
+        serializer.save(title=title, author=author)
+        reviews = Review.objects.filter(title=title)
+        sum_of_scores = reviews.aggregate(Sum("score"))
+        average_score = sum_of_scores["score__sum"] / len(reviews)
+        print(average_score)
+        title.rating = average_score
+        title.save()
+
+
+class PostDeleteUpdateReviewViewSet(
+    mixins.DestroyModelMixin,
+    mixins.UpdateModelMixin,
+    GenericViewSet,
+):
+    serializer_class = ReviewsSerializer
+    permission_classes = (DeleteUpdateGTEAdminOrOwner,)
+
+    def get_object(self):
+        return get_object_or_404(Review, id=self.kwargs.get("reviews_id"))

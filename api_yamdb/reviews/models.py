@@ -1,4 +1,5 @@
 from django.db import models
+from users.models import User
 
 
 class Genre(models.Model):
@@ -49,4 +50,43 @@ class Title(models.Model):
         null=True,
         related_name="titles",
         on_delete=models.SET_NULL,
+    )
+    rating = models.SmallIntegerField(
+        verbose_name="Средний рейтинг", blank=True
+    )
+
+
+class Review(models.Model):
+    """
+    Отзывы
+    """
+
+    title = models.ForeignKey(
+        Title, on_delete=models.CASCADE, related_name="reviews"
+    )
+    text = models.TextField(verbose_name="Текст отзыва", max_length=500)
+    author = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="reviews"
+    )
+    score = models.SmallIntegerField(verbose_name="Оценка")
+    pub_date = models.DateTimeField(
+        verbose_name="Дата публикации",
+        auto_now_add=True,
+    )
+
+
+class Comment(models.Model):
+    """
+    Комментарии
+    """
+
+    review = models.ForeignKey(
+        Review, on_delete=models.CASCADE, related_name="comments"
+    )
+    text = models.TextField(verbose_name="Текст комментария", max_length=500)
+    author = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="comments"
+    )
+    pub_date = models.DateTimeField(
+        verbose_name="Дата публикации", auto_now_add=True
     )
