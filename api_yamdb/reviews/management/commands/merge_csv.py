@@ -38,6 +38,7 @@ class Command(BaseCommand):
                 year=entry["year"],
                 category=get_object_or_404(Category, id=entry["category"]),
             )
+            item.save()
             title_genre_dict = pandas.read_csv(
                 "static/data/genre_title.csv"
             ).to_dict(orient="records")
@@ -46,7 +47,6 @@ class Command(BaseCommand):
                     item.genre.add(
                         get_object_or_404(Genre, id=tg_entry["genre_id"])
                     )
-            item.save()
         print("Titles data has successfully saved in db")
         user_dict = pandas.read_csv("static/data/users.csv").to_dict(
             orient="records"

@@ -1,38 +1,39 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 from .views import (
-    GetPostReviewViewSet,
+    ReviewViewSet,
     SignUpView,
+    TitleViewSet,
     TokenView,
     UserMyselfView,
     UsersViewSet,
-    PostDeleteUpdateReviewViewSet,
+    CommentViewSet,
 )
 
 
 API_VERSION = "api/v1/"
 
 router = DefaultRouter()
-router.register(API_VERSION + "auth/signup", SignUpView)
-router.register(API_VERSION + "users", UsersViewSet)
+router.register("auth/signup", SignUpView)
+router.register("users", UsersViewSet)
 router.register(
-    API_VERSION + r"titles/(?P<title_id>\d+)/reviews",
-    GetPostReviewViewSet,
-    "review-readonly",
+    r"titles/(?P<title_id>\d+)/reviews/(?P<review_id>\d+)/comments",
+    CommentViewSet,
+    basename="comment",
 )
 router.register(
-    API_VERSION + r"titles/(?P<title_id>\d+)/reviews/",
-    PostDeleteUpdateReviewViewSet,
-    "review-post-delete-update",
+    r"titles/(?P<title_id>\d+)/reviews",
+    ReviewViewSet,
+    basename="review",
 )
-
+router.register("titles", TitleViewSet, basename="title")
 
 urlpatterns = [
-    path("", include(router.urls)),
     path(
-        API_VERSION + "auth/token/",
+        "auth/token/",
         TokenView.as_view(),
         name="token",
     ),
-    path(API_VERSION + "users/me/", UserMyselfView.as_view(), name="users/me"),
+    path("users/me/", UserMyselfView.as_view(), name="users/me"),
+    path("", include(router.urls)),
 ]

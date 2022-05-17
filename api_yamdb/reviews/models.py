@@ -47,12 +47,11 @@ class Title(models.Model):
     )
     category = models.ForeignKey(
         Category,
-        null=True,
         related_name="titles",
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
     )
     rating = models.SmallIntegerField(
-        verbose_name="Средний рейтинг", blank=True
+        verbose_name="Средний рейтинг", blank=True, null=True
     )
 
 

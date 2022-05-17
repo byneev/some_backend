@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
-from reviews.models import Review
+from reviews.models import Comment, Review, Title
 from users.models import User
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
@@ -73,4 +73,31 @@ class ReviewsSerializer(serializers.ModelSerializer):
             "author",
             "score",
             "pub_date",
+        )
+
+
+class CommentsSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        slug_field="username", read_only=True
+    )
+
+    class Meta:
+        model = Comment
+        fields = (
+            "id",
+            "text",
+            "author",
+            "pub_date",
+        )
+
+
+class TitlesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Title
+        fields = (
+            "name",
+            "year",
+            "description",
+            "genre",
+            "category"
         )

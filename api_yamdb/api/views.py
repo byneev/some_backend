@@ -1,23 +1,23 @@
 from django.shortcuts import get_object_or_404
 from rest_framework.viewsets import (
     ModelViewSet,
-    ReadOnlyModelViewSet,
     GenericViewSet,
 )
 from django.db.models import Sum
 from rest_framework.generics import RetrieveUpdateAPIView, mixins
 
-from reviews.models import Review, Title
+from reviews.models import Comment, Review, Title
 from .permissions import (
     GTEAdminPermission,
-    GetAnyOrPostAuth,
     OnlyPost,
     OwnerGetPatchPermission,
-    DeleteUpdateGTEAdminOrOwner,
+    GetAnyPostAuthDeletePatchGTEModeratorOrOwner,
 )
 from .serializers import (
+    CommentsSerializer,
     ReviewsSerializer,
     SignUpSerializer,
+    TitlesSerializer,
     TokenSerializer,
     UsersSerializer,
 )
@@ -30,6 +30,13 @@ from rest_framework import permissions
 from .exceptions import AlreadyExistException
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import filters
+
+
+def get_average_score(title):
+    reviews = Review.objects.filter(title=title)
+    sum_of_scores = reviews.aggregate(Sum("score"))
+    average_score = int(sum_of_scores["score__sum"] / len(reviews))
+    return average_score
 
 
 class SignUpView(ModelViewSet):
@@ -97,9 +104,9 @@ class UsersViewSet(ModelViewSet):
     lookup_field = "username"
 
 
-class GetPostReviewViewSet(ModelViewSet):
+class ReviewViewSet(ModelViewSet):
     serializer_class = ReviewsSerializer
-    permission_classes = (GetAnyOrPostAuth,)
+    permission_classes = (GetAnyPostAuthDeletePatchGTEModeratorOrOwner,)
     pagination_class = PageNumberPagination
 
     def get_queryset(self):
@@ -109,24 +116,40 @@ class GetPostReviewViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         title = get_object_or_404(Title, id=self.kwargs.get("title_id"))
-        print(title.rating)
         author = self.request.user
         serializer.save(title=title, author=author)
-        reviews = Review.objects.filter(title=title)
-        sum_of_scores = reviews.aggregate(Sum("score"))
-        average_score = sum_of_scores["score__sum"] / len(reviews)
-        print(average_score)
-        title.rating = average_score
+        title.rating = get_average_score(title)
         title.save()
 
+    def perform_destroy(self, instance):
+        title = get_object_or_404(Title, id=self.kwargs.get("title_id"))
+        title.rating = get_average_score(title)
+        title.save()
+        return super().perform_destroy(instance)
 
-class PostDeleteUpdateReviewViewSet(
-    mixins.DestroyModelMixin,
-    mixins.UpdateModelMixin,
-    GenericViewSet,
-):
-    serializer_class = ReviewsSerializer
-    permission_classes = (DeleteUpdateGTEAdminOrOwner,)
+    def perform_update(self, serializer):
+        title = get_object_or_404(Title, id=self.kwargs.get("title_id"))
+        title.rating = get_average_score(title)
+        title.save()
+        return super().perform_update(serializer)
 
-    def get_object(self):
-        return get_object_or_404(Review, id=self.kwargs.get("reviews_id"))
+
+class CommentViewSet(ModelViewSet):
+    serializer_class = CommentsSerializer
+    permission_classes = (GetAnyPostAuthDeletePatchGTEModeratorOrOwner,)
+    pagination_class = PageNumberPagination
+
+    def get_queryset(self):
+        review = get_object_or_404(Review, id=self.kwargs.get("review_id"))
+        comments = Comment.objects.filter(review=review)
+        return comments
+
+    def perform_create(self, serializer):
+        review = get_object_or_404(Review, id=self.kwargs.get("review_id"))
+        author = self.request.user
+        serializer.save(review=review, author=author)
+
+
+class TitleViewSet(ModelViewSet):
+    serializer_class = TitlesSerializer
+    permission_classes = (GetAnyPostAuthDeletePatchGTEModeratorOrOwner,)
