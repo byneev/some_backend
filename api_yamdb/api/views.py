@@ -1,8 +1,8 @@
 from django.shortcuts import get_object_or_404
 from rest_framework.viewsets import (
     ModelViewSet,
-    GenericViewSet,
 )
+
 from django.db.models import Sum
 from rest_framework.generics import RetrieveUpdateAPIView, mixins
 
@@ -17,7 +17,7 @@ from .serializers import (
     CommentsSerializer,
     ReviewsSerializer,
     SignUpSerializer,
-    TitlesSerializer,
+    TitleSerializer,
     TokenSerializer,
     UsersSerializer,
 )
@@ -98,7 +98,6 @@ class UsersViewSet(ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UsersSerializer
     permission_classes = (GTEAdminPermission,)
-    pagination_class = PageNumberPagination
     filter_backends = (filters.SearchFilter,)
     search_fields = ("username",)
     lookup_field = "username"
@@ -107,7 +106,6 @@ class UsersViewSet(ModelViewSet):
 class ReviewViewSet(ModelViewSet):
     serializer_class = ReviewsSerializer
     permission_classes = (GetAnyPostAuthDeletePatchGTEModeratorOrOwner,)
-    pagination_class = PageNumberPagination
 
     def get_queryset(self):
         title_id = self.kwargs.get("title_id")
@@ -118,26 +116,17 @@ class ReviewViewSet(ModelViewSet):
         title = get_object_or_404(Title, id=self.kwargs.get("title_id"))
         author = self.request.user
         serializer.save(title=title, author=author)
-        title.rating = get_average_score(title)
-        title.save()
-
-    def perform_destroy(self, instance):
-        title = get_object_or_404(Title, id=self.kwargs.get("title_id"))
-        title.rating = get_average_score(title)
-        title.save()
-        return super().perform_destroy(instance)
 
     def perform_update(self, serializer):
         title = get_object_or_404(Title, id=self.kwargs.get("title_id"))
-        title.rating = get_average_score(title)
-        title.save()
-        return super().perform_update(serializer)
+        serializer.save(
+            title=title,
+        )
 
 
 class CommentViewSet(ModelViewSet):
     serializer_class = CommentsSerializer
     permission_classes = (GetAnyPostAuthDeletePatchGTEModeratorOrOwner,)
-    pagination_class = PageNumberPagination
 
     def get_queryset(self):
         review = get_object_or_404(Review, id=self.kwargs.get("review_id"))
@@ -151,5 +140,6 @@ class CommentViewSet(ModelViewSet):
 
 
 class TitleViewSet(ModelViewSet):
-    serializer_class = TitlesSerializer
+    serializer_class = TitleSerializer
     permission_classes = (GetAnyPostAuthDeletePatchGTEModeratorOrOwner,)
+    queryset = Title.objects.all()

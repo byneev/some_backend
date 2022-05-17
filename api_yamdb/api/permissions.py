@@ -13,7 +13,7 @@ class OwnerGetPatchPermission(permissions.BasePermission):
 
 class GTEAdminPermission(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user.role != "user" and request.user.is_authenticated
+        return request.user.is_authenticated and request.user.role != "user"
 
 
 class OnlyPost(permissions.BasePermission):

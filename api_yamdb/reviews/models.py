@@ -1,5 +1,19 @@
 from django.db import models
 from users.models import User
+from django.db.models import UniqueConstraint
+
+GRADES = (
+    (1, 1),
+    (2, 2),
+    (3, 3),
+    (4, 4),
+    (5, 5),
+    (6, 6),
+    (7, 7),
+    (8, 8),
+    (9, 9),
+    (10, 10),
+)
 
 
 class Genre(models.Model):
@@ -48,10 +62,11 @@ class Title(models.Model):
     category = models.ForeignKey(
         Category,
         related_name="titles",
-        on_delete=models.CASCADE,
+        null=True,
+        on_delete=models.SET_NULL,
     )
     rating = models.SmallIntegerField(
-        verbose_name="Средний рейтинг", blank=True, null=True
+        verbose_name="Средний рейтинг", null=True, blank=True
     )
 
 
@@ -67,11 +82,18 @@ class Review(models.Model):
     author = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="reviews"
     )
-    score = models.SmallIntegerField(verbose_name="Оценка")
+    score = models.SmallIntegerField(verbose_name="Оценка", choices=GRADES)
     pub_date = models.DateTimeField(
         verbose_name="Дата публикации",
         auto_now_add=True,
     )
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=["author", "title"], name="author_title_unique"
+            )
+        ]
 
 
 class Comment(models.Model):
